@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+import tempfile
 import time
 import unicodedata
 from pathlib import Path
@@ -33,17 +34,17 @@ from sklearn.model_selection import GroupKFold
 from xgboost import XGBRegressor
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE))
-import OFL.restaurants_pl_brands as rb  # noqa: E402
+sys.path.insert(0, str(HERE.parent.parent)) 
+from src.OFL import restaurants_pl_brands as rb  # noqa: E402
 
 PARQUET_CANDIDATES = [
-    HERE.parent / "datasprint_sample_data.parquet",
-    HERE / "datasprint_sample_data.parquet",
+    HERE.parent.parent / "data" / "datasprint_sample_data.parquet",
+    HERE.parent.parent / "data" / "datasprint_sample_data.parquet",
 ]
-GEONAMES = HERE / "PL.txt"
-MERCHANT_DB = HERE / "pl_rest.duckdb"
-DEMAND_DB = HERE / "zip_demand.duckdb"
-ZIP_REVENUE = HERE / "zip_revenue.csv"
+GEONAMES = HERE.parent.parent / "data" / "PL.txt"
+MERCHANT_DB = HERE.parent.parent / "data" / "pl_rest.duckdb"
+DEMAND_DB = HERE.parent.parent / "data" / "zip_demand.duckdb"
+ZIP_REVENUE = HERE.parent.parent / "data" / "zip_revenue.csv"
 SEED = 0
 TILL_RE = r"(( (K|KASA|POS|TERM|TERMINAL) ?[0-9]{1,3})|( SCO))+$"
 HUB_MCCS = (5811, 5812, 5813, 5814)
@@ -106,6 +107,12 @@ def _log(msg: str) -> None:
     print(msg, flush=True)
 
 
+def _duck_temp_dir(name: str) -> Path:
+    path = Path(tempfile.gettempdir()) / "datasprint_visa_uber" / name
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 def _has_table(db: Path, table: str) -> bool:
     if not db.is_file():
         return False
@@ -126,8 +133,8 @@ def _merchant_con(parquet: Path) -> duckdb.DuckDBPyConnection:
     con.execute("SET threads TO 32")
     con.execute("SET memory_limit = '22GB'")
     con.execute("SET preserve_insertion_order = false")
-    Path("/tmp/duckdb_spill_plrest").mkdir(exist_ok=True)
-    con.execute("SET temp_directory = '/tmp/duckdb_spill_plrest'")
+    spill = _duck_temp_dir("duckdb_spill_plrest")
+    con.execute(f"SET temp_directory = '{str(spill).replace('\\', '/')}'")
     con.execute("SET enable_progress_bar = false")
     con.execute("SET VARIABLE parquet_path = ?", [str(parquet)])
     con.execute(r"CREATE OR REPLACE MACRO digits(x) AS regexp_replace(COALESCE(CAST(x AS VARCHAR), ''), '[^0-9]', '', 'g')")
@@ -367,7 +374,8 @@ def build_demand_db(parquet: Path, shops: pd.DataFrame) -> None:
     t0 = time.time()
     con = duckdb.connect(str(DEMAND_DB))
     con.execute("SET memory_limit = '24GB'")
-    con.execute("SET temp_directory = '/tmp/duckdb_zip_demand'")
+    demand_temp = _duck_temp_dir("duckdb_zip_demand")
+    con.execute(f"SET temp_directory = '{str(demand_temp).replace('\\', '/')}'")
     con.execute("SET preserve_insertion_order = false")
     con.execute(f"ATTACH '{MERCHANT_DB}' AS p (READ_ONLY)")
     con.execute(r"CREATE OR REPLACE MACRO digits(x) AS regexp_replace(COALESCE(CAST(x AS VARCHAR), ''), '[^0-9]', '', 'g')")
@@ -532,7 +540,8 @@ def build_demand_db(parquet: Path, shops: pd.DataFrame) -> None:
 def _duck(path: Path | None = None) -> duckdb.DuckDBPyConnection:
     con = duckdb.connect(str(path) if path else ":memory:")
     con.execute("SET memory_limit = '24GB'")
-    con.execute("SET temp_directory = '/tmp/duckdb_revenue'")
+    revenue_temp = _duck_temp_dir("duckdb_revenue")
+    con.execute(f"SET temp_directory = '{str(revenue_temp).replace('\\', '/')}'")
     con.execute("SET preserve_insertion_order = false")
     con.execute(r"CREATE OR REPLACE MACRO digits(x) AS regexp_replace(COALESCE(CAST(x AS VARCHAR), ''), '[^0-9]', '', 'g')")
     con.execute(r"""
