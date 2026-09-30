@@ -12,12 +12,14 @@ Open the map with the command in [How to open the map](#how-to-open-the-map). Th
 
 The left-hand panel has four controls:
 
-| Control | What it does | Starting value |
-|---|---|---|
-| Type of place | Restaurant or fast food | First type in the revenue file |
-| Budget (PLN) | The most the chosen places may cost in total | 2,500,000 |
-| Required space (m²) | Floor area used to work out the cost of each place | 25 |
-| Max number of locations | How many postal codes may be chosen | 1 |
+
+| Control                 | What it does                                       | Starting value                 |
+| ----------------------- | -------------------------------------------------- | ------------------------------ |
+| Type of place           | Restaurant or fast food                            | First type in the revenue file |
+| Budget (PLN)            | The most the chosen places may cost in total       | 2,500,000                      |
+| Required space (m²)     | Floor area used to work out the cost of each place | 25                             |
+| Max number of locations | How many postal codes may be chosen                | 1                              |
+
 
 After a few seconds the page shows:
 
@@ -57,6 +59,8 @@ data/price_per_m2_statistics_...  ─┤   what space costs there
                      Location picker (src/OFL/ofl.py)
 ```
 
+
+
 ### 1. Revenue model
 
 `src/OFL/revenue.py` turns the Visa transactions into a revenue estimate for each postal code in Poland.
@@ -67,6 +71,8 @@ data/price_per_m2_statistics_...  ─┤   what space costs there
 4. **Predict.** An XGBoost model learns the typical yearly spend of a shop that was open all year in each postal code and category. It is tested on 30% of postal codes it has never seen. The number in the file for each postal code comes from a version of the model that did not see that postal code during training.
 
 The output has 10,620 rows covering 7,591 postal codes: 6,929 restaurant rows and 3,691 fast-food rows.
+
+> **Visa data required for retraining:** The original Visa parquet is not included in this repository. To retrain the revenue model, obtain `datasprint_sample_data.parquet` through the approved data-sharing process and place it in `src/OFL/`, beside `revenue.py`. The existing map does not require this file.
 
 ### 2. Kraków locations and costs
 
@@ -85,21 +91,27 @@ The map can show 407 Kraków postal codes that have a position, a price, and a r
 - the total cost within the budget
 - the number of locations at or below the user's maximum
 
+
+
 ## What is in this folder
 
-| Path | What it is |
-|---|---|
-| `dashboards/app.py` | The map app |
-| `src/OFL/ofl.py` | The location picker |
-| `src/OFL/revenue.py` | The revenue model |
-| `src/OFL/restaurants_pl_brands.py` | Merchant name cleaning and brand matching |
-| `data/zip_revenue.csv` | Predicted revenue per postal code and type (`zip_code`, `type`, `predicted_revenue`) |
-| `data/krakow_postal_codes.csv` | 1,151 Kraków-area postal codes with latitude and longitude |
-| `data/price_per_m2_statistics_postal_codes.csv` | Average and median apartment price per m² for 911 postal codes |
-| `data/input_data.csv` | 36,862 Kraków apartment sales: price per m², size, floor, rooms, market, district, year, distance to centre, parking, balcony, storage, coordinates |
-| `data/apartments_with_postal_codes.csv` | The same sales with a postal code attached |
-| `data/PL.txt` | GeoNames list of Polish postal codes |
-| `notebooks/postal_codes.ipynb` | Builds the Kraków postal code and price files |
+
+| Path                                            | What it is                                                                                                                                          |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dashboards/app.py`                             | The map app                                                                                                                                         |
+| `src/OFL/ofl.py`                                | The location picker                                                                                                                                 |
+| `src/OFL/revenue.py`                            | The revenue model                                                                                                                                   |
+| `src/OFL/restaurants_pl_brands.py`              | Merchant name cleaning and brand matching                                                                                                           |
+| `data/zip_revenue.csv`                          | Predicted revenue per postal code and type (`zip_code`, `type`, `predicted_revenue`)                                                                |
+| `data/krakow_postal_codes.csv`                  | 1,151 Kraków-area postal codes with latitude and longitude                                                                                          |
+| `data/price_per_m2_statistics_postal_codes.csv` | Average and median apartment price per m² for 911 postal codes                                                                                      |
+| `data/input_data.csv`                           | 36,862 Kraków apartment sales: price per m², size, floor, rooms, market, district, year, distance to centre, parking, balcony, storage, coordinates |
+| `data/apartments_with_postal_codes.csv`         | The same sales with a postal code attached                                                                                                          |
+| `data/PL.txt`                                   | GeoNames list of Polish postal codes                                                                                                                |
+| `notebooks/postal_codes.ipynb`                  | Builds the Kraków postal code and price files                                                                                                       |
+
+
+
 
 ## How to open the map
 
