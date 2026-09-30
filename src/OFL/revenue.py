@@ -34,7 +34,7 @@ from xgboost import XGBRegressor
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-import restaurants_pl_brands as rb  # noqa: E402
+import OFL.restaurants_pl_brands as rb  # noqa: E402
 
 PARQUET_CANDIDATES = [
     HERE.parent / "datasprint_sample_data.parquet",
